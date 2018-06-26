@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "data.either": "^1.5.1",
+    "data.task": "^3.1.1",
+    "immutable": "^3.8.2",
+    "immutable-ext": "^1.1.5",
     "react": "^16.1.0",
     "react-dom": "^16.1.0",
     "react-scripts": "1.0.17",
+    "react-table": "^6.8.6",
     "spotify-web-api-js": "^0.22.1"
   },
   "scripts": {
