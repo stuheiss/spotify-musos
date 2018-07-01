@@ -1,3 +1,22 @@
+.rt-thead {
+  background-color: lightsteelblue;
+}
+.rt-tbody {
+  background-color: lightslategrey;
+}
+#root {
+  background-color: lightgrey;
+}
+.genres {
+  overflow: visible !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  text-align: left !important;
+}
+.error {
+  background: red;
+}
+
 .App {
   text-align: center;
 }
@@ -34,11 +53,4 @@
 div,
 button {
   margin: 10px;
-}
-
-.genres {
-  overflow: visible !important;
-  word-wrap: break-word !important;
-  white-space: normal !important;
-  text-align: left !important;
 }

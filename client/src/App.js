@@ -3,6 +3,7 @@ import './App.css'
 import ReactTable from 'react-table'
 import 'react-table/react-table.css'
 import SpotifyWebApi from 'spotify-web-api-js'
+import logo from './logo.svg'
 const spotifyApi = new SpotifyWebApi()
 
 const Task = require('data.task')
@@ -21,7 +22,7 @@ class App extends Component {
     this.state = {
       loggedIn: token ? true : false,
       nowPlaying: { name: 'Not Checked', albumArt: '' },
-      value: '',
+      artist: '',
       genres: '',
       patterns: [],
       related: [],
@@ -34,11 +35,11 @@ class App extends Component {
   }
 
   handleChangeArtist(event) {
-    this.setState({ value: event.target.value })
+    this.setState({ artist: event.target.value })
   }
 
   handleSubmitArtist(event) {
-    this.dataflow(this.state.value)
+    this.dataflow(this.state.artist)
     event.preventDefault()
   }
 
@@ -47,7 +48,7 @@ class App extends Component {
   }
 
   handleSubmitGenres(event) {
-    this.dataflow(this.state.value)
+    this.dataflow(this.state.artist)
     event.preventDefault()
   }
 
@@ -163,19 +164,27 @@ class App extends Component {
   }
 
   getNowPlaying() {
-    spotifyApi.getMyCurrentPlaybackState().then(response => {
-      this.setState({
-        nowPlaying: {
-          name: response.item.name,
-          albumArt: response.item.album.images[0].url
-        }
-      })
-    })
+    spotifyApi.getMyCurrentPlaybackState().then(
+      response => {
+        this.setState({
+          nowPlaying: {
+            name: response.item.name,
+            albumArt: response.item.album.images[0].url,
+            artist: response.item.artists[0].name
+          }
+        })
+      },
+      error => {
+        this.setState({
+          error: error.responseText
+        })
+      }
+    )
   }
 
   handleAddToArtists(name) {
-    const value = this.state.value ? this.state.value + ',' + name : name
-    this.setState({ value: value })
+    const artist = this.state.artist ? this.state.artist + ',' + name : name
+    this.setState({ artist: artist })
   }
 
   relatedArtistsTableColumns() {
@@ -246,13 +255,20 @@ class App extends Component {
     const error = this.state.error
     return (
       <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <h1 className="App-title">Find Related Artists</h1>
+        </header>
         {error && (
-          <div>
+          <div className="error">
             Aw snap:{error.responseText ? error.responseText : error.toString()}
           </div>
         )}
         <a href="http://localhost:8888"> Login to Spotify </a>
-        <div>Now Playing: {this.state.nowPlaying.artist}</div>
+        <div>
+          Now Playing: {this.state.nowPlaying.name}, artist:{' '}
+          {this.state.nowPlaying.artist}
+        </div>
         <div>
           <img
             alt=""
@@ -274,7 +290,7 @@ class App extends Component {
                   <input
                     style={{ width: '370px', fontSize: '20px' }}
                     type="text"
-                    value={this.state.value}
+                    value={this.state.artist}
                     onChange={this.handleChangeArtist}
                   />
                 </label>
