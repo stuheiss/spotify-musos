@@ -22,26 +22,42 @@ class App extends Component {
       loggedIn: token ? true : false,
       nowPlaying: { name: 'Not Checked', albumArt: '' },
       value: '',
-      related: []
+      genres: '',
+      patterns: [],
+      related: [],
+      error: ''
     }
-    this.handleChange = this.handleChange.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleChangeArtist = this.handleChangeArtist.bind(this)
+    this.handleSubmitArtist = this.handleSubmitArtist.bind(this)
+    this.handleChangeGenres = this.handleChangeGenres.bind(this)
+    this.handleSubmitGenres = this.handleSubmitGenres.bind(this)
   }
 
-  handleChange(event) {
+  handleChangeArtist(event) {
     this.setState({ value: event.target.value })
   }
 
-  handleSubmit(event) {
+  handleSubmitArtist(event) {
+    this.dataflow(this.state.value)
+    event.preventDefault()
+  }
+
+  handleChangeGenres(event) {
+    this.setState({ genres: event.target.value })
+  }
+
+  handleSubmitGenres(event) {
     this.dataflow(this.state.value)
     event.preventDefault()
   }
 
   dataflow(query) {
     if (!query) return
-    const names = new Task((rej, res) =>
-      res(query.split(',').map(s => s.trim()))
-    )
+
+    // split a comma separated string into an array
+    const strSplitOnComma = s => s.split(',').map(s => s.trim())
+
+    const names = new Task((rej, res) => res(strSplitOnComma(query)))
 
     const first = xs => Either.fromNullable(xs[0])
 
@@ -79,12 +95,24 @@ class App extends Component {
 
     const id = x => x
 
+    // filter function matches by genre
+    const byGenres = artist => {
+      if (!this.state.genres) return true // no filtering
+      const subpats = strSplitOnComma(this.state.genres).join('|')
+      //const pattern = `^(${subpats})$` // anchored
+      const pattern = `(${subpats})` // not anchored
+      const matches = artist.genres.filter(el =>
+        new RegExp(pattern, 'i').test(el)
+      )
+      return matches.length > 0
+    }
+
     const main = names =>
       List(names)
         .traverse(Task.of, related)
         .map(artists =>
           flatten(artists)
-            .map(id)
+            .filter(byGenres)
             .map(artist => ({
               name: artist.name,
               id: artist.id,
@@ -95,7 +123,7 @@ class App extends Component {
             }))
         )
 
-    // xs is array of hash
+    // post-process dataflow results
     const process = xs => {
       const rels = xs.reduce((acc, cur) => {
         let cnt = acc[cur.name] && acc[cur.name].count ? acc[cur.name].count : 0
@@ -111,8 +139,14 @@ class App extends Component {
       })
     }
 
+    const saverror = error => {
+      this.setState({
+        error: error
+      })
+    }
+
     // run it
-    names.chain(main).fork(console.error, process)
+    names.chain(main).fork(saverror, process)
   }
 
   getHashParams() {
@@ -144,10 +178,8 @@ class App extends Component {
     this.setState({ value: value })
   }
 
-  render() {
-    const loggedIn = this.state.loggedIn
-    const data = this.state.related
-    const columns = [
+  relatedArtistsTableColumns() {
+    return [
       {
         Header: 'Artist',
         accessor: 'name', // String-based value accessors!
@@ -189,19 +221,36 @@ class App extends Component {
       {
         Header: 'Play',
         accessor: 'image',
-        Cell: props => {
+        Cell: row => {
           return (
             <div>
-              <a href={props.value}>
-                {props.value && <img alt="" height={100} src={props.value} />}
-              </a>
+              <div>
+                {row.original.image && (
+                  <img alt="" height={100} src={row.original.image} />
+                )}
+              </div>
+              <div>
+                <a href={row.original.spotify}>Play</a>
+              </div>
             </div>
           )
         }
       }
     ]
+  }
+
+  render() {
+    const data = this.state.related
+    const columns = this.relatedArtistsTableColumns()
+    const loggedIn = this.state.loggedIn
+    const error = this.state.error
     return (
       <div className="App">
+        {error && (
+          <div>
+            Aw snap:{error.responseText ? error.responseText : error.toString()}
+          </div>
+        )}
         <a href="http://localhost:8888"> Login to Spotify </a>
         <div>Now Playing: {this.state.nowPlaying.artist}</div>
         <div>
@@ -218,24 +267,39 @@ class App extends Component {
         )}
         {loggedIn && (
           <div>
-            Related Artists
-            <form onSubmit={this.handleSubmit}>
-              <label>
-                Artists:
-                <input
-                  style={{ width: '370px', fontSize: '20px' }}
-                  type="text"
-                  value={this.state.value}
-                  onChange={this.handleChange}
-                />
-              </label>
-              <input type="submit" value="Submit" />
-            </form>
-          </div>
-        )}
-        {loggedIn && (
-          <div>
-            <ReactTable pageSize={100} data={data} columns={columns} />
+            <div>
+              <form onSubmit={this.handleSubmitArtist}>
+                <label>
+                  Artists:
+                  <input
+                    style={{ width: '370px', fontSize: '20px' }}
+                    type="text"
+                    value={this.state.value}
+                    onChange={this.handleChangeArtist}
+                  />
+                </label>
+                <input type="submit" value="Submit" />
+              </form>
+            </div>
+            <div>
+              <form onSubmit={this.handleSubmitGenres}>
+                <label>
+                  Genres:
+                  <input
+                    style={{ width: '370px', fontSize: '20px' }}
+                    type="text"
+                    value={this.state.genres}
+                    onChange={this.handleChangeGenres}
+                  />
+                </label>
+                <input type="submit" value="Submit" />
+              </form>
+            </div>
+            <div>Related count: {this.state.related.length}</div>
+
+            <div>
+              <ReactTable pageSize={100} data={data} columns={columns} />
+            </div>
           </div>
         )}
       </div>
