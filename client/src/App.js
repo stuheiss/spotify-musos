@@ -314,7 +314,7 @@ class App extends Component {
             <div>Related count: {this.state.related.length}</div>
 
             <div>
-              <ReactTable pageSize={100} data={data} columns={columns} />
+              <ReactTable pageSize={50} data={data} columns={columns} />
             </div>
           </div>
         )}

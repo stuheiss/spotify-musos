@@ -1,11 +1,12 @@
 .rt-thead {
-  background-color: lightsteelblue;
+  background-color: darkslategray;
 }
 .rt-tbody {
-  background-color: lightslategrey;
+  background-color: darkslategrey;
 }
 #root {
-  background-color: lightgrey;
+  background-color: black;
+  color: white;
 }
 .genres {
   overflow: visible !important;
@@ -15,6 +16,19 @@
 }
 .error {
   background: red;
+}
+.rt-th {
+  background-color: slategrey;
+  color: white;
+}
+.rt-td a {
+  background-color: darkolivegreen;
+  color: white;
+}
+.rt-td button {
+  color: white;
+  background-color: darkolivegreen;
+  border-radius: 50%;
 }
 
 .App {
